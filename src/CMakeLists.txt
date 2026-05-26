@@ -30,6 +30,7 @@ if(VK_ENABLE_QT)
     target_sources(gameengine
         PRIVATE
             runtime/platform/Qt/SurfaceQt.cpp
+            "runtime/platform/Qt/QtWindow.cpp"
     )
 
     target_compile_definitions(gameengine
