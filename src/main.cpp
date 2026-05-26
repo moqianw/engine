@@ -1,8 +1,6 @@
+#include <QApplication>
+int main(int argc, char** args) {
+	QApplication* app = new QApplication(argc, args);
 
-int main() {
-	vk::InstanceCreateInfo createinfo{};
-
-	vk::Instance instance_ = vk::createInstance(createinfo);
-	instance_.destroy();
-	return 0;
+	return app->exec();
 }
