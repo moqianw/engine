@@ -1,18 +1,19 @@
 #include "runtime/vk/VulkanBackend.hpp"
 #include "runtime/platform/Qt/QtWindow.hpp"
+
+#include "core/Log.hpp"
 namespace RT {
 	void VulkanBackend::create() {
 		if (isvalid_) return;
 		core_.create();
 		if (!core_.isValid()) return;
+		EG_INFO("VulkanBaclend created");
 		isvalid_ = true;
 	}
 	void VulkanBackend::destroy() {
 		if (!isvalid_) return;
 		core_.destroy();
-
-		//test
-		surface_.destroy();
+		EG_INFO("VulkanBackend destroyed");
 		isvalid_ = false;
 	}
 
@@ -28,10 +29,4 @@ namespace RT {
 		return isvalid_;
 	}
 
-	void VulkanBackend::pushtestsurface(PL::QtWindow* window)
-	{
-		if (!window) return;
-		surface_.create(core_.vulkanInstance().handle(), window->nativeHandle());
-		if (!surface_.isValid()) return;
-	}
 }

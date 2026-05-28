@@ -1,6 +1,7 @@
 #include "runtime/vk/core/VulkanInstance.hpp"
 
 #include <vector>
+#include "core/Log.hpp"
 namespace RT {
 	VulkanInstance::~VulkanInstance()
 	{
@@ -27,11 +28,16 @@ namespace RT {
 			.setPpEnabledExtensionNames(extensions.data())
 			.setEnabledExtensionCount(extensions.size());
 		instance_ = vk::createInstance(createinfo);
+		if (!instance_) {
+			EG_ERROR("VulkanInstance::create: error");
+		}
+		EG_INFO("VulkanInstance created");
 	}
 	void VulkanInstance::destroy()
 	{
 		if (!isValid()) return;
 		instance_.destroy();
+		EG_INFO("VulkanInstance destroyed");
 		instance_ = nullptr;
 
 	}

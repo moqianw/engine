@@ -2,6 +2,9 @@
 #if defined(_WIN32)
 #include <vulkan/vulkan_win32.h>
 #endif
+
+#include "core/Log.hpp"
+
 namespace RT {
 	VulkanSurface::~VulkanSurface() {
 		destroy();
@@ -24,10 +27,12 @@ namespace RT {
 		const VkResult result =
 			vkCreateWin32SurfaceKHR(static_cast<VkInstance>(instance), &surfInfo, nullptr, &cSurface);
 		if (result != VK_SUCCESS || cSurface == VK_NULL_HANDLE) {
+			EG_ERROR("VulkanSurface::create: false");
 			return;
 		}
 
 		surface_ =  vk::SurfaceKHR(cSurface);
+		EG_TRACE("VulkanSurface created");
 #else
 		return;
 #endif

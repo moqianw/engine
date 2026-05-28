@@ -13,8 +13,6 @@ namespace RT {
 
 		bool isvalid_ = false;
 
-		//test surface
-		VulkanSurface surface_{};
 	public:
 		VulkanBackend() = default;
 		void create();
@@ -24,9 +22,6 @@ namespace RT {
 
 		bool isValid() const;
 		explicit operator bool() const;
-
-		//test
-		void pushtestsurface(PL::QtWindow* window);
 
 	};
 }
