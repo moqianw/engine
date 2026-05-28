@@ -1,7 +1,7 @@
 #pragma once
 #include <cstdint>
 #include <string>
-
+#include "runtime/platform/NativeWindowHandle.hpp"
 class QWindow;
 namespace PL {
 	struct WindowDesc {
@@ -22,6 +22,6 @@ namespace PL {
 		uint32_t width() const;
 		uint32_t height() const;
 		QWindow* window() const;
-
+		NativeWindowHandle nativeHandle() const;
 	};
 }

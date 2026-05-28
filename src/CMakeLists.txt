@@ -29,8 +29,12 @@ endif()
 if(VK_ENABLE_QT)
     target_sources(gameengine
         PRIVATE
-            runtime/platform/Qt/SurfaceQt.cpp
+            
             "runtime/platform/Qt/QtWindow.cpp"
+            "runtime/vk/core/VulkanInstance.cpp" 
+            "runtime/vk/core/VulkanCore.cpp"
+            "runtime/vk/VulkanBackend.cpp"
+            "runtime/vk/present/VulkanSurface.cpp"
     )
 
     target_compile_definitions(gameengine
