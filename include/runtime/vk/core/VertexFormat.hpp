@@ -6,8 +6,7 @@
 
 #include <vulkan/vulkan.hpp>
 #include <glm/glm.hpp>
-namespace UT{
-
+namespace RT{
     enum class VertexFormat : uint8_t {
         // P3: position 3 floats
         // C4: color 4 uint8_t

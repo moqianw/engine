@@ -35,7 +35,7 @@ if(VK_ENABLE_QT)
             "runtime/vk/core/VulkanCore.cpp"
             "runtime/vk/VulkanBackend.cpp"
             "runtime/vk/present/VulkanSurface.cpp"
-     "core/Log.cpp" "core/Result.cpp" "core/Time.cpp")
+     "core/Log.cpp" "core/Result.cpp" "core/Time.cpp" "runtime/vk/core/VulkanQueue.cpp" "runtime/vk/core/VulkanAdapter.cpp" "runtime/vk/core/VulkanDevice.cpp")
 
     target_compile_definitions(gameengine
         PRIVATE
