@@ -12,7 +12,7 @@ int main(int argc, char** args) {
 	PL::WindowDesc desc{};
 	PL::QtWindow* window = new PL::QtWindow(desc);
 	window->show();
-
+	
 	app->exec();
 	vkbackend.destroy();
 	return 0;

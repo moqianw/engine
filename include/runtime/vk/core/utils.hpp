@@ -1,6 +1,7 @@
 #pragma once
 
 #include <optional>
+#include <cstdint>
 namespace RT {
     struct VulkanQueueFamilyIndices {
         std::optional<uint32_t> graphicsFamily;

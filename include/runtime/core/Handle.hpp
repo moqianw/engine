@@ -149,4 +149,6 @@ namespace RT {
 		std::vector<uint32_t> nextfree_;//下一个freehandle
 		uint32_t freehead_ = 0;//第一个freehandle
 	};
+
+	
 }

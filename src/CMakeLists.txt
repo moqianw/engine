@@ -28,14 +28,20 @@ endif()
 
 if(VK_ENABLE_QT)
     target_sources(gameengine
-        PRIVATE
-            
+        PRIVATE    
             "runtime/platform/Qt/QtWindow.cpp"
             "runtime/vk/core/VulkanInstance.cpp" 
             "runtime/vk/core/VulkanCore.cpp"
             "runtime/vk/VulkanBackend.cpp"
             "runtime/vk/present/VulkanSurface.cpp"
-     "core/Log.cpp" "core/Result.cpp" "core/Time.cpp" "runtime/vk/core/VulkanQueue.cpp" "runtime/vk/core/VulkanAdapter.cpp" "runtime/vk/core/VulkanDevice.cpp")
+            "core/Log.cpp"
+            "core/Result.cpp"
+            "core/Time.cpp"
+            "runtime/vk/core/VulkanQueue.cpp" 
+            "runtime/vk/core/VulkanAdapter.cpp"
+            "runtime/vk/core/VulkanDevice.cpp"
+            "runtime/vk/present/VulkanSwapchain.cpp"
+     "runtime/vk/present/PresentTarget.cpp")
 
     target_compile_definitions(gameengine
         PRIVATE

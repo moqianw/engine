@@ -5,8 +5,6 @@
 namespace RT {
 	class VulkanAdapter;
 
-
-
 	class VulkanDevice {
 	private:
 		vk::Device device_ = nullptr;
