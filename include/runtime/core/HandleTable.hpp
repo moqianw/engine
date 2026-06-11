@@ -1,8 +1,8 @@
 #pragma once
 
+#include <algorithm>
 #include <cstddef>
 #include <cstdint>
-#include <type_traits>
 #include <utility>
 #include <vector>
 
@@ -14,6 +14,7 @@ namespace RT {
     class HandleTable {
     private:
         std::vector<D> data_;
+        std::vector<H> aliveHandles_;
         SlotMap<H> slots_{};
 
     public:
@@ -25,25 +26,16 @@ namespace RT {
         HandleTable(HandleTable&&) noexcept = default;
         HandleTable& operator=(HandleTable&&) noexcept = default;
 
-        template<typename... Args>
-        H create(Args&&... args)
+        H allocate()
         {
-            static_assert(
-                std::is_default_constructible_v<D>,
-                "HandleTable with std::vector<D> requires D to be default constructible"
-                );
-
-            static_assert(
-                std::is_move_assignable_v<D>,
-                "HandleTable with std::vector<D> requires D to be move assignable"
-                );
-
             H handle = slots_.allocate();
 
             const std::uint32_t slot = slotIndex(handle);
             ensureRecordStorage(slot);
 
-            data_[slot] = D(std::forward<Args>(args)...);
+            data_[slot] = D{};
+
+            aliveHandles_.push_back(handle);
 
             return handle;
         }
@@ -54,7 +46,12 @@ namespace RT {
                 return false;
             }
 
-            return slots_.pendingRelease(handle);
+            if (!slots_.pendingRelease(handle)) {
+                return false;
+            }
+
+            eraseAliveHandle(handle);
+            return true;
         }
 
         bool release(const H& handle)
@@ -82,6 +79,7 @@ namespace RT {
                 return false;
             }
 
+            eraseAliveHandle(handle);
             return release(handle);
         }
 
@@ -188,9 +186,35 @@ namespace RT {
             return slots_.getLastUsedValue(handle);
         }
 
+        template<typename Fn>
+        void forEachAlive(Fn&& fn)
+        {
+            for (const H& handle : aliveHandles_) {
+                if (D* record = get(handle)) {
+                    fn(handle, *record);
+                }
+            }
+        }
+
+        template<typename Fn>
+        void forEachAlive(Fn&& fn) const
+        {
+            for (const H& handle : aliveHandles_) {
+                if (const D* record = get(handle)) {
+                    fn(handle, *record);
+                }
+            }
+        }
+
+        std::vector<H> aliveHandles() const
+        {
+            return aliveHandles_;
+        }
+
         void clear()
         {
             data_.clear();
+            aliveHandles_.clear();
             slots_.reset();
         }
 
@@ -252,6 +276,18 @@ namespace RT {
             }
 
             return &data_[slot];
+        }
+
+        void eraseAliveHandle(const H& handle)
+        {
+            auto it = std::find(aliveHandles_.begin(), aliveHandles_.end(), handle);
+
+            if (it == aliveHandles_.end()) {
+                return;
+            }
+
+            *it = aliveHandles_.back();
+            aliveHandles_.pop_back();
         }
     };
 
