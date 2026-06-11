@@ -20,12 +20,6 @@ namespace RT {
     public:
         HandleTable() = default;
 
-        HandleTable(const HandleTable&) = delete;
-        HandleTable& operator=(const HandleTable&) = delete;
-
-        HandleTable(HandleTable&&) noexcept = default;
-        HandleTable& operator=(HandleTable&&) noexcept = default;
-
         H allocate()
         {
             H handle = slots_.allocate();
@@ -34,8 +28,6 @@ namespace RT {
             ensureRecordStorage(slot);
 
             data_[slot] = D{};
-
-            aliveHandles_.push_back(handle);
 
             return handle;
         }
@@ -69,7 +61,7 @@ namespace RT {
             return slots_.release(handle);
         }
 
-        bool releaseNow(const H& handle)
+        bool releaseForce(const H& handle)
         {
             if (!slots_.isAlive(handle)) {
                 return false;
