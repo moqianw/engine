@@ -12,7 +12,7 @@ namespace RT {
 		if (isValid()) return;
 		vk::InstanceCreateInfo createinfo{};
 		vk::ApplicationInfo appinfo;
-		appinfo.setApiVersion(vk::ApiVersion13)
+		appinfo.setApiVersion(vk::ApiVersion14)
 			.setApplicationVersion(1)
 			.setEngineVersion(1)
 			.setPApplicationName("gameengine")

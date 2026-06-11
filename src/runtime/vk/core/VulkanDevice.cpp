@@ -93,6 +93,7 @@ namespace RT {
 		const std::vector<const char*> extensions = requiredDeviceExtensions(requirements);
 
 		vk::PhysicalDeviceFeatures enabledFeatures{};
+		
 		vk::DeviceCreateInfo createInfo{};
 		createInfo.setQueueCreateInfos(queueCreateInfos)
 			.setPEnabledFeatures(&enabledFeatures)
