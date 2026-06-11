@@ -3,10 +3,6 @@
 #include <vector>
 #include "core/Log.hpp"
 namespace RT {
-	VulkanInstance::~VulkanInstance()
-	{
-		destroy();
-	}
 	void VulkanInstance::create()
 	{
 		if (isValid()) return;
@@ -26,7 +22,7 @@ namespace RT {
 		};
 		createinfo.setPApplicationInfo(&appinfo)
 			.setPpEnabledExtensionNames(extensions.data())
-			.setEnabledExtensionCount(extensions.size());
+			.setEnabledExtensionCount(static_cast<uint32_t>(extensions.size()));
 		instance_ = vk::createInstance(createinfo);
 		if (!instance_) {
 			EG_ERROR("VulkanInstance::create: error");

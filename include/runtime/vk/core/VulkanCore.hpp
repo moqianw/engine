@@ -12,10 +12,11 @@ namespace RT {
 		bool isvalid_ = false;
 	public:
 		VulkanCore() = default;
+		~VulkanCore() = default;
 		void create();
 		void createDevice(const VulkanDeviceRequirements& deviceRequirements, vk::SurfaceKHR surface = nullptr);
 		void destroy();
-		~VulkanCore();
+
 
 		bool isValid() const;
 		bool hasAdapter() const;

@@ -15,10 +15,10 @@ namespace RT {
 
 	public:
 		VulkanBackend() = default;
+		~VulkanBackend() = default;
 		void create();
 		void destroy();
 
-		~VulkanBackend();
 
 		bool isValid() const;
 		explicit operator bool() const;

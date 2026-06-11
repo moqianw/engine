@@ -8,7 +8,7 @@ namespace RT {
 		vk::Instance instance_ = nullptr;
 	public:
 		VulkanSurface() = default;
-		~VulkanSurface();
+		~VulkanSurface() = default;
 
 		void create(vk::Instance instance, const PL::NativeWindowHandle& handle);
 		void destroy();

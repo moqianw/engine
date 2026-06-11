@@ -17,10 +17,6 @@ namespace RT {
 		isvalid_ = false;
 	}
 
-	VulkanBackend::~VulkanBackend() {
-		destroy();
-	}
-
 	bool VulkanBackend::isValid() const {
 		return isvalid_;
 	}

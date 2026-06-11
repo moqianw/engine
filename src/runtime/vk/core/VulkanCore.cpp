@@ -61,9 +61,6 @@ namespace RT {
 		isvalid_ = false;
 	}
 
-	VulkanCore::~VulkanCore() {
-		destroy();
-	}
 
 	bool VulkanCore::isValid() const {
 		return isvalid_ && instance_.isValid();

@@ -15,7 +15,7 @@ namespace RT {
 		bool isvalid_ = false;
 	public:
 		VulkanDevice() = default;
-
+		~VulkanDevice() = default;
 		void create(const VulkanAdapter& adapter, const VulkanDeviceRequirements& requirements);
 		vk::Device handle() const;
 		const VulkanQueue& graphicsQueue() const;
@@ -31,7 +31,7 @@ namespace RT {
 		explicit operator bool() const;
 
 		void destroy();
-		~VulkanDevice();
+
 
 	};
 }

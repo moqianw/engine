@@ -15,7 +15,7 @@ namespace RT {
 
 	public:
 		PresentTarget() = default;
-		~PresentTarget();
+		~PresentTarget() = default;
 
 		void createSurface(vk::Instance instance, const PresentTargetDesc& desc);
 		void resize(uint32_t w, uint32_t h);

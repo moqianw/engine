@@ -6,10 +6,6 @@
 #include "core/Log.hpp"
 
 namespace RT {
-	VulkanSurface::~VulkanSurface() {
-		destroy();
-	}
-
 
 	void VulkanSurface::create(vk::Instance instance, const PL::NativeWindowHandle& handle) {
 		if (isValid()) return;

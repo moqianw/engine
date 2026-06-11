@@ -8,7 +8,7 @@ namespace RT {
 		vk::Instance instance_ = nullptr;
 	public:
 		VulkanInstance() = default;
-		~VulkanInstance();
+		~VulkanInstance() = default;
 
 		void create();
 		void destroy();

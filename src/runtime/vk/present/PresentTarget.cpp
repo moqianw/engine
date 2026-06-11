@@ -1,9 +1,6 @@
 #include "runtime/vk/present/PresentTarget.hpp"
 #include "core/Log.hpp"
 namespace RT {
-	PresentTarget::~PresentTarget() {
-		destroy();
-	}
 
 	void PresentTarget::createSurface(vk::Instance instance, const PresentTargetDesc& desc) {
 		if (isSurfaceValid()) return;

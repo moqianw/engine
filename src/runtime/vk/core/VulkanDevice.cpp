@@ -218,7 +218,4 @@ namespace RT {
 		device_ = nullptr;
 		isvalid_ = false;
 	}
-	VulkanDevice::~VulkanDevice() {
-		destroy();
-	}
 }
