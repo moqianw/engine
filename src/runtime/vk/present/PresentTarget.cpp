@@ -13,7 +13,6 @@ namespace RT {
 			EG_ERROR("PresentTarget::createSurface: failed create surface");
 			return;
 		}
-		EG_INFO("PresentTarget::createSurface: target {} created", desc_.id_);
 	}
 	void PresentTarget::resize(uint32_t w, uint32_t h) {
 		if (!w || !h) return;
@@ -23,16 +22,14 @@ namespace RT {
 		resizePending_ = true;
 	}
 	void PresentTarget::destroy() {
-		if (!surface_.isValid()) {
+		if (surface_.isValid()) {
 			surface_.destroy();
 		}
 		desc_ = {};
 		resizePending_ = false;
 	}
 
-	PresentTargetId PresentTarget::Id() const {
-		return desc_.id_;
-	}
+
 	VulkanSurface& PresentTarget::surface() {
 		return surface_;
 	}

@@ -41,7 +41,7 @@ if(VK_ENABLE_QT)
             "runtime/vk/core/VulkanAdapter.cpp"
             "runtime/vk/core/VulkanDevice.cpp"
             "runtime/vk/present/VulkanSwapchain.cpp"
-     "runtime/vk/present/PresentTarget.cpp")
+     "runtime/vk/present/PresentTarget.cpp" "runtime/vk/present/PresentationSystem.cpp")
 
     target_compile_definitions(gameengine
         PRIVATE

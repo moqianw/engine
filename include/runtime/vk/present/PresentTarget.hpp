@@ -21,7 +21,6 @@ namespace RT {
 		void resize(uint32_t w, uint32_t h);
 		void destroy();
 
-		PresentTargetId Id() const;
 		VulkanSurface& surface();
 		const VulkanSurface& surface() const;
 

@@ -2,12 +2,12 @@
 
 #include <cstdint>
 #include <runtime/platform/NativeWindowHandle.hpp>
+#include "runtime/core/HandleTable.hpp"
+#include "runtime/core/Handle.hpp"
 namespace RT {
-	using PresentTargetId = uint32_t;
-
-
+	struct PresentTargetTag {};
+	using PresentTargetHandle = Handle<PresentTargetTag>;
 	struct PresentTargetDesc {
-		PresentTargetId id_ = 0;
 		PL::NativeWindowHandle nativeHandle_{};
 		uint32_t width_ = 0;
 		uint32_t height_ = 0;

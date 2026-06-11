@@ -1,154 +1,408 @@
 #pragma once
+
+#include <cstddef>
+#include <cstdint>
+#include <functional>
 #include <vector>
-#include <string>
-#include <stdexcept>
+
 #include "core/Log.hpp"
+
 namespace RT {
-	enum class SlotState : uint8_t {
-		eFree = 0,
-		eAlive,
-		ePendingDestroy
-	};
-	struct SlotMeta {
-		uint32_t generation = 1;
-		SlotState state = SlotState::eFree;
-		uint64_t lastusedvalue = 0;
-	};
-	template<typename Tag>
-	class Handle {
-	public:
-		constexpr Handle() = default;
-		constexpr explicit Handle(uint64_t raw) { u_.raw_ = raw; }
-		constexpr bool isValid() const { return u_.raw_ != 0; }
-		constexpr explicit operator bool() const { return isValid(); }
-		constexpr uint32_t index() const { return u_.parts.index; }
-		constexpr uint32_t generation() const { return u_.parts.generation; }
-		constexpr uint64_t raw() const { return u_.raw_; }
-		constexpr bool operator==(const Handle& other) const { return u_.raw_ == other.u_.raw_; }
-		constexpr bool operator!=(const Handle& other) const { return u_.raw_ != other.u_.raw_; }
-	private:
-		union{
-			uint64_t raw_ = 0;
-			struct {
-				uint32_t index;//1-base
-				uint32_t generation;//1-base
-			}parts;
-		}u_;
-		template<typename H> friend class SlotMap;
-	};
+
+    enum class SlotState : std::uint8_t {
+        eFree = 0,
+        eAlive,
+        ePendingDestroy
+    };
+
+    struct SlotMeta {
+        std::uint32_t generation = 1;
+        SlotState state = SlotState::eFree;
+
+        std::uint64_t lastUsedValue = 0;
+    };
+
+    template<typename Tag>
+    class Handle {
+    private:
+        std::uint64_t raw_ = 0;
+
+        template<typename H>
+        friend class SlotMap;
+
+    public:
+        constexpr Handle() = default;
+
+        constexpr explicit Handle(std::uint64_t raw)
+            : raw_(raw)
+        {
+        }
+
+        static constexpr Handle invalid()
+        {
+            return Handle{};
+        }
+
+        constexpr bool isValid() const
+        {
+            return raw_ != 0;
+        }
+
+        constexpr explicit operator bool() const
+        {
+            return isValid();
+        }
+
+        // 1-based index.
+        // 0 means invalid handle.
+        constexpr std::uint32_t index() const
+        {
+            return static_cast<std::uint32_t>(raw_ & 0xffffffffull);
+        }
+
+        // 1-based generation.
+        // 0 is never used for valid handles.
+        constexpr std::uint32_t generation() const
+        {
+            return static_cast<std::uint32_t>(raw_ >> 32);
+        }
+
+        constexpr std::uint64_t raw() const
+        {
+            return raw_;
+        }
+
+        constexpr bool operator==(const Handle& other) const
+        {
+            return raw_ == other.raw_;
+        }
+
+        constexpr bool operator!=(const Handle& other) const
+        {
+            return raw_ != other.raw_;
+        }
 
 
-	template<typename H>
-	class SlotMap {
-	public:
-		H allocate() {
-			uint32_t index = 0;
-			if (freehead_ != 0) {
-				index = freehead_;
-				freehead_ = nextfree_[freehead_ - 1];
-			}
-			else {
-				meta_.emplace_back();
-				index = meta_.size();
-				nextfree_.push_back(0);
-			}
-			auto& m = meta_[index - 1];
-			m.state = SlotState::eAlive;
-			return makeHandle(index, m.generation);
-		}
-		bool isAlive(const H& h) const {
-			const uint32_t index = h.index();
-			if (index == 0 || index > meta_.size()) {
-				return false;
-			}
-			const auto& m = meta_[index - 1];
-			return (m.state == SlotState::eAlive) && (m.generation == h.generation());
-		}
+    };
 
-		bool isValidGeneration(const H& h) const {//存活或待销毁
+    template<typename H>
+    class SlotMap {
+    private:
+        std::vector<SlotMeta> meta_;
+        std::vector<std::uint32_t> nextFree_;
+        std::uint32_t freeHead_ = 0;
 
-			const uint32_t index = h.index();
-			if (index == 0 || index > meta_.size()) {
-				return false;
-			}
-			const auto& m = meta_[index - 1];
-			return (m.state != SlotState::eFree) && (m.generation == h.generation());
-		}
-		void pendingRelease(const H& h) {//逻辑删除
-			const auto index = validate(h);
-			auto& m = meta_[index - 1];
-			if (m.state == SlotState::eFree) {
-				EG_TRACE("SlotMap::pendingRelease: handle {} is not alive, cannot pending release", h.raw());
-			}
-			m.state = SlotState::ePendingDestroy;
-		}
+    public:
+        H allocate()
+        {
+            std::uint32_t index = 0;
 
-		void release(const H& h) {
-			const auto index = validate(h);
-			auto& m = meta_[index - 1];
-			switch (m.state) {
-			case SlotState::eFree:
-			{
-				EG_TRACE("SlotMap::release: handle {} is already free, cannot release again", h.raw());
-				return;
-			}
-			case SlotState::eAlive:
-			{
-				EG_ERROR("SlotMap::release: handle {} is alive but not pending destroy, releasing directly", h.raw());
-				return;
-			}
-			case SlotState::ePendingDestroy:
-				m.state = SlotState::eFree;
-				m.generation++;
-				if (m.generation == 0) m.generation = 1;
-				m.lastusedvalue = 0;
-				nextfree_[index - 1] = freehead_;
-				freehead_ = index;
-			}
+            if (freeHead_ != 0) {
+                index = freeHead_;
+                freeHead_ = nextFree_[index - 1];
+            }
+            else {
+                meta_.emplace_back();
+                nextFree_.push_back(0);
+                index = static_cast<std::uint32_t>(meta_.size());
+            }
 
-		}
-		void reset() {
-			meta_.clear();
-			nextfree_.clear();
-			freehead_ = 0;
-		}
-		size_t count() const {
-			return meta_.size();
-		}
-		void touch(const H& h, uint64_t usedvalue) {
-			const auto index = validate(h);
-			auto& m = meta_[index - 1];
-			if (m.state != SlotState::eAlive) return;
-			m.lastusedvalue = usedvalue;
-		}
-		uint64_t getLastUsedValue(const H& h) const {
-			const auto index = validate(h);
-			return meta_[index - 1].lastusedvalue;
-		}
-	private:
-		uint32_t validate(const H& h) const {
-			const uint32_t idx = h.index();
-			if (idx == 0 || idx > meta_.size()) {
-				EG_ERROR("SlotMap::validate: handle {} index {} out of range", h.raw(), idx);
-				return 0;
-			}
-			const SlotMeta& m = meta_[idx - 1];
-			if (m.generation != h.generation()) {
-				EG_ERROR("SlotMap::validate: handle {} generation mismatch, expected {}, actual {}", h.raw(), m.generation, h.generation());
-				return 0;
-			}
-			return idx;
-		}
-		H makeHandle(uint32_t index, uint32_t generation) {
-			uint64_t h = (static_cast<uint64_t>(generation) << 32) | static_cast<uint64_t>(index);
-			return H{ h };
-		}
+            SlotMeta& meta = meta_[index - 1];
 
-		std::vector<SlotMeta> meta_;
-		//freehandle的链表
-		std::vector<uint32_t> nextfree_;//下一个freehandle
-		uint32_t freehead_ = 0;//第一个freehandle
-	};
+            meta.state = SlotState::eAlive;
+            meta.lastUsedValue = 0;
 
-	
-}
+            return makeHandle(index, meta.generation);
+        }
+
+        bool isAlive(const H& handle) const
+        {
+            std::uint32_t index = 0;
+
+            if (!tryGetIndex(handle, index, false)) {
+                return false;
+            }
+
+            const SlotMeta& meta = meta_[index - 1];
+            return meta.state == SlotState::eAlive;
+        }
+
+        bool isPendingDestroy(const H& handle) const
+        {
+            std::uint32_t index = 0;
+
+            if (!tryGetIndex(handle, index, false)) {
+                return false;
+            }
+
+            const SlotMeta& meta = meta_[index - 1];
+            return meta.state == SlotState::ePendingDestroy;
+        }
+
+        bool isValidGeneration(const H& handle) const
+        {
+            std::uint32_t index = 0;
+
+            if (!tryGetIndex(handle, index, false)) {
+                return false;
+            }
+
+            const SlotMeta& meta = meta_[index - 1];
+            return meta.state != SlotState::eFree;
+        }
+
+        SlotState stateOf(const H& handle) const
+        {
+            std::uint32_t index = 0;
+
+            if (!tryGetIndex(handle, index, false)) {
+                return SlotState::eFree;
+            }
+
+            return meta_[index - 1].state;
+        }
+
+        bool pendingRelease(const H& handle)
+        {
+            std::uint32_t index = 0;
+
+            if (!tryGetIndex(handle, index, true)) {
+                return false;
+            }
+
+            SlotMeta& meta = meta_[index - 1];
+
+            switch (meta.state) {
+            case SlotState::eFree:
+                EG_TRACE(
+                    "SlotMap::pendingRelease: handle {} is already free",
+                    handle.raw()
+                );
+                return false;
+
+            case SlotState::ePendingDestroy:
+                EG_TRACE(
+                    "SlotMap::pendingRelease: handle {} is already pending destroy",
+                    handle.raw()
+                );
+                return true;
+
+            case SlotState::eAlive:
+                meta.state = SlotState::ePendingDestroy;
+                return true;
+            }
+
+            return false;
+        }
+
+        bool release(const H& handle)
+        {
+            std::uint32_t index = 0;
+
+            if (!tryGetIndex(handle, index, true)) {
+                return false;
+            }
+
+            SlotMeta& meta = meta_[index - 1];
+
+            switch (meta.state) {
+            case SlotState::eFree:
+                EG_TRACE(
+                    "SlotMap::release: handle {} is already free",
+                    handle.raw()
+                );
+                return false;
+
+            case SlotState::eAlive:
+                EG_ERROR(
+                    "SlotMap::release: handle {} is alive, call pendingRelease first",
+                    handle.raw()
+                );
+                return false;
+
+            case SlotState::ePendingDestroy:
+                meta.state = SlotState::eFree;
+                ++meta.generation;
+
+                if (meta.generation == 0) {
+                    meta.generation = 1;
+                }
+
+                meta.lastUsedValue = 0;
+
+                nextFree_[index - 1] = freeHead_;
+                freeHead_ = index;
+
+                return true;
+            }
+
+            return false;
+        }
+
+        bool releaseNow(const H& handle)
+        {
+            if (!pendingRelease(handle)) {
+                return false;
+            }
+
+            return release(handle);
+        }
+
+        bool touch(const H& handle, std::uint64_t usedValue)
+        {
+            std::uint32_t index = 0;
+
+            if (!tryGetIndex(handle, index, true)) {
+                return false;
+            }
+
+            SlotMeta& meta = meta_[index - 1];
+
+            if (meta.state != SlotState::eAlive) {
+                return false;
+            }
+
+            meta.lastUsedValue = usedValue;
+            return true;
+        }
+
+        std::uint64_t getLastUsedValue(const H& handle) const
+        {
+            std::uint32_t index = 0;
+
+            if (!tryGetIndex(handle, index, true)) {
+                return 0;
+            }
+
+            return meta_[index - 1].lastUsedValue;
+        }
+
+        void reset()
+        {
+            meta_.clear();
+            nextFree_.clear();
+            freeHead_ = 0;
+        }
+
+        std::size_t slotCount() const
+        {
+            return meta_.size();
+        }
+
+        std::size_t aliveCount() const
+        {
+            std::size_t count = 0;
+
+            for (const SlotMeta& meta : meta_) {
+                if (meta.state == SlotState::eAlive) {
+                    ++count;
+                }
+            }
+
+            return count;
+        }
+
+        std::size_t pendingDestroyCount() const
+        {
+            std::size_t count = 0;
+
+            for (const SlotMeta& meta : meta_) {
+                if (meta.state == SlotState::ePendingDestroy) {
+                    ++count;
+                }
+            }
+
+            return count;
+        }
+
+        std::size_t freeCount() const
+        {
+            std::size_t count = 0;
+
+            for (const SlotMeta& meta : meta_) {
+                if (meta.state == SlotState::eFree) {
+                    ++count;
+                }
+            }
+
+            return count;
+        }
+
+        bool empty() const
+        {
+            return aliveCount() == 0 && pendingDestroyCount() == 0;
+        }
+
+    private:
+        bool tryGetIndex(
+            const H& handle,
+            std::uint32_t& outIndex,
+            bool logError
+        ) const
+        {
+            if (!handle.isValid()) {
+                if (logError) {
+                    EG_ERROR("SlotMap::tryGetIndex: invalid handle 0");
+                }
+
+                return false;
+            }
+
+            const std::uint32_t index = handle.index();
+
+            if (index == 0 || index > meta_.size()) {
+                if (logError) {
+                    EG_ERROR(
+                        "SlotMap::tryGetIndex: handle {} index {} out of range",
+                        handle.raw(),
+                        index
+                    );
+                }
+
+                return false;
+            }
+
+            const SlotMeta& meta = meta_[index - 1];
+
+            if (meta.generation != handle.generation()) {
+                if (logError) {
+                    EG_ERROR(
+                        "SlotMap::tryGetIndex: handle {} generation mismatch, expected {}, actual {}",
+                        handle.raw(),
+                        meta.generation,
+                        handle.generation()
+                    );
+                }
+
+                return false;
+            }
+
+            outIndex = index;
+            return true;
+        }
+
+        static H makeHandle(std::uint32_t index, std::uint32_t generation)
+        {
+            const std::uint64_t raw =
+                (static_cast<std::uint64_t>(generation) << 32) |
+                static_cast<std::uint64_t>(index);
+
+            return H{ raw };
+        }
+
+
+    };
+
+} // namespace RT
+
+namespace std {
+
+    template<typename Tag>
+    struct hash<RT::Handle<Tag>> {
+        std::size_t operator()(const RT::Handle<Tag>& handle) const noexcept
+        {
+            return std::hash<std::uint64_t>{}(handle.raw());
+        }
+    };
+
+} // namespace std

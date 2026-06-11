@@ -92,11 +92,30 @@ namespace RT {
 
 		const std::vector<const char*> extensions = requiredDeviceExtensions(requirements);
 
-		vk::PhysicalDeviceFeatures enabledFeatures{};
+		vk::PhysicalDeviceFeatures2 enabledFeatures{};
+		vk::PhysicalDeviceVulkan11Features features11{};
+		vk::PhysicalDeviceVulkan12Features features12{};
+		vk::PhysicalDeviceVulkan13Features features13{};
+		vk::PhysicalDeviceVulkan14Features features14{};
+		enabledFeatures.setPNext(&features11);
+		features11.setPNext(&features12);
+		features12.setPNext(&features13);
+		features13.setPNext(&features14);
+
+		features12.setTimelineSemaphore(true)
+			.setDescriptorIndexing(true)
+			.setBufferDeviceAddress(true)
+			.setScalarBlockLayout(true);
+		features13.setDynamicRendering(true)
+			.setSynchronization2(true);
+		features14.setDynamicRenderingLocalRead(true)
+			.setMaintenance5(true)
+			.setMaintenance6(true)
+			.setPushDescriptor(true);
 		
 		vk::DeviceCreateInfo createInfo{};
 		createInfo.setQueueCreateInfos(queueCreateInfos)
-			.setPEnabledFeatures(&enabledFeatures)
+			.setPNext(&enabledFeatures)
 			.setEnabledExtensionCount(static_cast<uint32_t>(extensions.size()))
 			.setPpEnabledExtensionNames(extensions.data());
 
