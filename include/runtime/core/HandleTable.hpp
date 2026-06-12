@@ -32,7 +32,36 @@ namespace RT {
             return handle;
         }
 
-        bool markPendingDestroy(const H& handle)
+        bool commit(const H& handle)
+        {
+            if (!slots_.isReserved(handle)) {
+                return false;
+            }
+
+            if (!slots_.markAlive(handle)) {
+                return false;
+            }
+
+            aliveHandles_.push_back(handle);
+            return true;
+        }
+
+        bool cancel(const H& handle)
+        {
+            if (!slots_.isReserved(handle)) {
+                return false;
+            }
+
+            const std::uint32_t slot = slotIndex(handle);
+
+            if (slot < data_.size()) {
+                data_[slot] = D{};
+            }
+
+            return slots_.cancelAllocate(handle);
+        }
+
+        bool pendingDestroy(const H& handle)
         {
             if (!slots_.isAlive(handle)) {
                 return false;
@@ -72,7 +101,26 @@ namespace RT {
             }
 
             eraseAliveHandle(handle);
+
             return release(handle);
+        }
+
+        D* getReserved(const H& handle)
+        {
+            if (!slots_.isReserved(handle)) {
+                return nullptr;
+            }
+
+            return recordAt(handle);
+        }
+
+        const D* getReserved(const H& handle) const
+        {
+            if (!slots_.isReserved(handle)) {
+                return nullptr;
+            }
+
+            return recordAt(handle);
         }
 
         D* get(const H& handle)
@@ -113,10 +161,6 @@ namespace RT {
 
         D* getAliveOrPending(const H& handle)
         {
-            if (!slots_.isValidGeneration(handle)) {
-                return nullptr;
-            }
-
             const SlotState state = slots_.stateOf(handle);
 
             if (state != SlotState::eAlive &&
@@ -129,10 +173,6 @@ namespace RT {
 
         const D* getAliveOrPending(const H& handle) const
         {
-            if (!slots_.isValidGeneration(handle)) {
-                return nullptr;
-            }
-
             const SlotState state = slots_.stateOf(handle);
 
             if (state != SlotState::eAlive &&
@@ -143,9 +183,40 @@ namespace RT {
             return recordAt(handle);
         }
 
+        D* getAnyValid(const H& handle)
+        {
+            const SlotState state = slots_.stateOf(handle);
+
+            if (state != SlotState::eReserved &&
+                state != SlotState::eAlive &&
+                state != SlotState::ePendingDestroy) {
+                return nullptr;
+            }
+
+            return recordAt(handle);
+        }
+
+        const D* getAnyValid(const H& handle) const
+        {
+            const SlotState state = slots_.stateOf(handle);
+
+            if (state != SlotState::eReserved &&
+                state != SlotState::eAlive &&
+                state != SlotState::ePendingDestroy) {
+                return nullptr;
+            }
+
+            return recordAt(handle);
+        }
+
         bool contains(const H& handle) const
         {
             return getAliveOrPending(handle) != nullptr;
+        }
+
+        bool isReserved(const H& handle) const
+        {
+            return slots_.isReserved(handle);
         }
 
         bool isAlive(const H& handle) const
@@ -198,7 +269,7 @@ namespace RT {
             }
         }
 
-        std::vector<H> aliveHandles() const
+        const std::vector<H>& aliveHandles() const
         {
             return aliveHandles_;
         }
@@ -213,6 +284,11 @@ namespace RT {
         std::size_t slotCount() const
         {
             return slots_.slotCount();
+        }
+
+        std::size_t reservedCount() const
+        {
+            return slots_.reservedCount();
         }
 
         std::size_t aliveCount() const

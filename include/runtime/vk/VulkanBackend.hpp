@@ -1,7 +1,8 @@
 #pragma once
 
 #include "runtime/vk/core/VulkanCore.hpp"
-#include "runtime/vk/present/VulkanSurface.hpp"
+#include "runtime/vk/present/PresentationSystem.hpp"
+
 namespace PL {
 	class QtWindow;
 }
@@ -9,7 +10,7 @@ namespace RT {
 	class VulkanBackend {
 	private:
 		VulkanCore core_{};
-
+		PresentationSystem presentationSystem_{};
 
 		bool isvalid_ = false;
 

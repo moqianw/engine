@@ -2,21 +2,23 @@
 #include "core/Log.hpp"
 namespace RT {
 
-	void PresentTarget::createSurface(vk::Instance instance, const PresentTargetDesc& desc) {
-		if (isSurfaceValid()) return;
+	bool PresentTarget::createSurface(vk::Instance instance, const PresentTargetDesc& desc) {
+		if (isSurfaceValid()) return true;
 		desc_ = desc;
 		surface_.create(instance, desc.nativeHandle_);
 		if (!isSurfaceValid()) {
 			EG_ERROR("PresentTarget::createSurface: failed create surface");
-			return;
+			return false;
 		}
+		return true;
 	}
-	void PresentTarget::resize(uint32_t w, uint32_t h) {
-		if (!w || !h) return;
-		if (w == desc_.width_ && h == desc_.height_) return;
+	bool PresentTarget::resize(uint32_t w, uint32_t h) {
+		if (!w || !h) return false;
+		if (w == desc_.width_ && h == desc_.height_) return false;
 		desc_.width_ = w;
 		desc_.height_ = h;
 		resizePending_ = true;
+		return true;
 	}
 	void PresentTarget::destroy() {
 		if (surface_.isValid()) {

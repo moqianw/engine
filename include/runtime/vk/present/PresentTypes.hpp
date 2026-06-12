@@ -4,6 +4,7 @@
 #include <runtime/platform/NativeWindowHandle.hpp>
 #include "runtime/core/HandleTable.hpp"
 #include "runtime/core/Handle.hpp"
+#include <vulkan/vulkan.hpp>
 namespace RT {
 	struct PresentTargetTag {};
 	using PresentTargetHandle = Handle<PresentTargetTag>;
@@ -14,4 +15,5 @@ namespace RT {
 		bool vsync_ = true;
 
 	};
+
 }
