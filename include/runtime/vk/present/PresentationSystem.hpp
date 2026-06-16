@@ -4,13 +4,14 @@
 #include <vulkan/vulkan.hpp>
 namespace RT {
 	using PresentTargetTable = HandleTable<PresentTargetHandle, PresentTarget>;
+	class VulkanCore;
 	class PresentationSystem {
 	private:
 		PresentTargetTable table_{};
-		vk::Instance instance_ = nullptr;
+		const VulkanCore* vkCore_ = nullptr;
 		bool isvalid_ = false;
 	public:
-		void create(vk::Instance instance);
+		void create(const VulkanCore* core);
 		void destroy();
 		PresentTargetHandle createTarget(const PresentTargetDesc& desc);
 		bool destroyTarget(const PresentTargetHandle handle);

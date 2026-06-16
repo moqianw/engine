@@ -1,37 +1,39 @@
 #pragma once
 
 #include "runtime/vk/present/PresentTypes.hpp"
-#include "runtime/vk/present/VulkanSurface.hpp"
 #include "runtime/vk/present/VulkanSwapchain.hpp"
 #include <vulkan/vulkan.hpp>
 namespace RT {
+	class VulkanSurface;
+	class VulkanCore;
 	class PresentTarget {
 	private:
 
-		VulkanSurface surface_{};
+		const VulkanSurface* surface_ = nullptr;
+		const VulkanCore* vkCore_ = nullptr;
 		VulkanSwapchain swapchain_{};
 		PresentTargetDesc desc_{};
 		
 		bool resizePending_ = false;
-
+		bool isvalid_ = false;
 
 	public:
 		PresentTarget() = default;
 		~PresentTarget() = default;
 
-		bool createSurface(vk::Instance instance, const PresentTargetDesc& desc);
+		bool create(const VulkanSurface* surface, const VulkanCore* core, const PresentTargetDesc& desc);
 		bool resize(uint32_t w, uint32_t h);
+		bool createSwapchain();
+		bool recreateSwapchain();
 		void destroy();
 
-		VulkanSurface& surface();
 		const VulkanSurface& surface() const;
-
+		const VulkanSwapchain& swapchain() const;
+		VulkanSwapchain& swapchain();
 		uint32_t width() const;
 		uint32_t height() const;
 		bool vsync() const;
-
 		bool resizePending() const;
-		bool isSurfaceValid() const;
 		bool isValid() const;
 		
 	};

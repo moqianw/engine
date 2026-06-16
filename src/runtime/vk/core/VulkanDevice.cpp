@@ -11,7 +11,7 @@ namespace RT {
 		std::vector<const char*> requiredDeviceExtensions(const VulkanDeviceRequirements& requirements) {
 			std::vector<const char*> extensions;
 
-			if (requirements.requirePresent || requirements.enableSwapchain) {
+			if (requirements.requirePresent) {
 				extensions.push_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
 			}
 

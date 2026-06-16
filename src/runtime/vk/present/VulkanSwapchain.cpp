@@ -125,7 +125,11 @@ namespace RT {
 		const vk::PhysicalDevice& physicaldevice,
 		const uint32_t& graphicsFamily,
 		const uint32_t& presentFamily) {
-		if (!isValid() || !device || !surface || !physicaldevice) {
+		if (isValid()) {
+			EG_INFO("Swapchain::create: create swapchain repeat");
+			return;
+		}
+		if (!device || !surface || !physicaldevice) {
 			EG_ERROR("Swapchain::create failed: invalid Vulkan device, physical device or surface");
 			return;
 		}

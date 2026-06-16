@@ -1,13 +1,14 @@
 #include "runtime/vk/present/PresentationSystem.hpp"
+#include "runtime/vk/core/VulkanCore.hpp"
 #include "core/Log.hpp"
 namespace RT {
-	void PresentationSystem::create(vk::Instance instance) {
+	void PresentationSystem::create(const VulkanCore* core) {
 		if (isvalid_) return;
-		if (!instance) {
+		if (!core || !core->isValid()) {
 			EG_ERROR("PresentationSystem::create: vulkan instance invalid");
 			return;
 		}
-		instance_ = instance;
+		vkCore_ = core;
 		isvalid_ = true;
 		EG_INFO("PresentationSystem created");
 	}
@@ -23,7 +24,7 @@ namespace RT {
 		}
 
 		table_.clear();
-		instance_ = nullptr;
+		vkCore_ = nullptr;
 		isvalid_ = false;
 
 		EG_INFO("PresentationSystem destroyed");
@@ -40,7 +41,8 @@ namespace RT {
 			table_.cancel(handle);
 			return PresentTargetHandle::invalid();
 		}
-		if (!target->createSurface(instance_, desc)) {
+		///
+		if (!target->create(nullptr ,vkCore_, desc)) {
 			table_.cancel(handle);
 			target->destroy();
 			EG_ERROR("PresentationSystem::createTarget: create surface false");
@@ -79,7 +81,7 @@ namespace RT {
 	}
 
 	bool PresentationSystem::isValid() const {
-		return isvalid_ && static_cast<bool>(instance_);
+		return isvalid_ && vkCore_ && vkCore_->isValid();
 	}
 	PresentationSystem::operator bool() const {
 		return isValid();

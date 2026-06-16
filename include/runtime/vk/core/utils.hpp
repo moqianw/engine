@@ -37,7 +37,6 @@ namespace RT {
         bool requirePresent = false;
         bool requireCompute = false;
         bool requireTransfer = false;
-        bool enableSwapchain = false;
     };
 }
 

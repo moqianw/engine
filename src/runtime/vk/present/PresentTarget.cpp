@@ -1,15 +1,57 @@
 #include "runtime/vk/present/PresentTarget.hpp"
+#include "runtime/vk/core/VulkanCore.hpp"
+#include "runtime/vk/present/VulkanSurface.hpp"
 #include "core/Log.hpp"
 namespace RT {
 
-	bool PresentTarget::createSurface(vk::Instance instance, const PresentTargetDesc& desc) {
-		if (isSurfaceValid()) return true;
+	bool PresentTarget::create(const VulkanSurface* surface, const VulkanCore* core, const PresentTargetDesc& desc) {
+		if (isvalid_) return true;
 		desc_ = desc;
-		surface_.create(instance, desc.nativeHandle_);
-		if (!isSurfaceValid()) {
-			EG_ERROR("PresentTarget::createSurface: failed create surface");
+		if (!surface || !surface->isValid() || !core || core->isValid()) {
+			EG_ERROR("PresentTarget::create: input invalid");
 			return false;
 		}
+		vkCore_ = core;
+		surface_ = surface;
+		if (!surface_->isValid()) {
+			EG_ERROR("PresentTarget::create: surface invalid");
+			return false;
+		}
+		createSwapchain();
+		return true;
+	}
+	bool PresentTarget::createSwapchain() {
+		if (swapchain_.isValid()) {
+			EG_ERROR("PresentTarget::createSwapchain: swapchain valid");
+			return false;
+		}
+		swapchain_.create(vkCore_->vulkanDevice().handle(),
+			surface_->handle(),
+			vkCore_->vulkanAdapter().handle(),
+			vkCore_->vulkanDevice().graphicsQueue().familyIndex(),
+			vkCore_->vulkanDevice().presentQueue().familyIndex());
+		if (!swapchain_.isValid()) {
+			EG_ERROR("PresentTarget::createSwapchain: swapchain created false");
+			return false;
+		}
+		EG_INFO("PresentTarget::createSwapchain: swapchain created");
+		return true;
+	}
+	bool PresentTarget::recreateSwapchain() {
+		if (!swapchain_.isValid()) {
+			EG_ERROR("PresentTarget::recreateSwapchain: swapchain invalid");
+			return false;
+		}
+		swapchain_.recreate(vkCore_->vulkanDevice().handle(),
+			surface_->handle(),
+			vkCore_->vulkanAdapter().handle(),
+			vkCore_->vulkanDevice().graphicsQueue().familyIndex(),
+			vkCore_->vulkanDevice().presentQueue().familyIndex());
+		if (!swapchain_.isValid()) {
+			EG_ERROR("PresentTarget::recreateSwapchain: swapchain recreated false");
+			return false;
+		}
+		EG_INFO("PresentTarget::recreateSwapchain: swapchain recreated");
 		return true;
 	}
 	bool PresentTarget::resize(uint32_t w, uint32_t h) {
@@ -21,19 +63,17 @@ namespace RT {
 		return true;
 	}
 	void PresentTarget::destroy() {
-		if (surface_.isValid()) {
-			surface_.destroy();
+		if (swapchain_.isValid()) {
+			swapchain_.destroy(vkCore_->vulkanDevice().handle());
 		}
+		surface_ = nullptr;
 		desc_ = {};
 		resizePending_ = false;
 	}
 
 
-	VulkanSurface& PresentTarget::surface() {
-		return surface_;
-	}
 	const VulkanSurface& PresentTarget::surface() const {
-		return surface_;
+		return *surface_;
 	}
 
 	uint32_t PresentTarget::width() const {
@@ -49,10 +89,7 @@ namespace RT {
 	bool PresentTarget::resizePending() const {
 		return resizePending_;
 	}
-	bool PresentTarget::isSurfaceValid() const {
-		return surface_.isValid();
-	}
 	bool PresentTarget::isValid() const {
-		return !resizePending_ && surface_.isValid();
+		return !resizePending_ && surface_->isValid();
 	}
 }

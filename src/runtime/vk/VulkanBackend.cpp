@@ -1,5 +1,4 @@
 #include "runtime/vk/VulkanBackend.hpp"
-#include "runtime/platform/Qt/QtWindow.hpp"
 
 #include "core/Log.hpp"
 namespace RT {
